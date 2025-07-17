@@ -1,15 +1,35 @@
 {
   "timeZone": "Asia/Kolkata",
   "dependencies": {
-    "libraries": [{
-      "userSymbol": "Tamotsu",
-      "libraryId": "1OiJIgWlrg_DFHFYX_SoaEzhFJPCmwbbfEHEqYEfLEEhKRloTNVJ-3U4s",
-      "version": "32"
-    }, {
-      "userSymbol": "LodashGS",
-      "libraryId": "1SQ0PlSMwndIuOAgtVJdjxsuXueECtY9OGejVDS37ckSVbMll73EXf2PW",
-      "version": "6"
-    }]
+    "libraries": [
+      {
+        "userSymbol": "Tamotsu",
+        "libraryId": "1OiJIgWlrg_DFHFYX_SoaEzhFJPCmwbbfEHEqYEfLEEhKRloTNVJ-3U4s",
+        "version": "32"
+      },
+      {
+        "userSymbol": "LodashGS",
+        "libraryId": "1SQ0PlSMwndIuOAgtVJdjxsuXueECtY9OGejVDS37ckSVbMll73EXf2PW",
+        "version": "6"
+      }
+    ],
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Gmail",
+        "version": "v1",
+        "serviceId": "gmail"
+      },
+      {
+        "userSymbol": "Drive",
+        "version": "v3",
+        "serviceId": "drive"
+      },
+      {
+        "userSymbol": "DriveActivity",
+        "version": "v2",
+        "serviceId": "driveactivity"
+      }
+    ]
   },
   "webapp": {
     "access": "ANYONE_ANONYMOUS",
