@@ -44,7 +44,9 @@ const GmailAutomation = {
     const end = props.getProperty("END_DATE");
     const parts = [];
     if (this.keywords.length) {
-      const kw = this.keywords.map((k) => `"${k}"`).join(" OR ");
+      const kw = this.keywords
+        .map((k) => `(subject:${k} OR body:${k})`)
+        .join(" OR ");
       parts.push(`(${kw})`);
     }
     if (this.trustedSenders.length) {
@@ -143,10 +145,29 @@ const GmailAutomation = {
         const mime = att.getContentType();
         if (mime === MimeType.PDF) {
           texts.push(this.readPdf(att));
-        } else if (mime.indexOf("spreadsheet") !== -1 || mime.indexOf("excel") !== -1) {
+        } else if (
+          mime.indexOf("spreadsheet") !== -1 ||
+          mime.indexOf("excel") !== -1 ||
+          mime === MimeType.CSV
+        ) {
           texts.push(this.readSpreadsheet(att));
         } else if (mime.startsWith("image/")) {
           texts.push(this.readImage(att));
+        } else if (
+          mime === MimeType.PLAIN_TEXT ||
+          mime.startsWith("text/") ||
+          mime === "application/json" ||
+          mime === "application/xml" ||
+          mime === "text/xml" ||
+          mime === "text/html"
+        ) {
+          texts.push(att.getDataAsString());
+        } else if (
+          mime === MimeType.ZIP ||
+          mime === "application/x-rar-compressed" ||
+          mime === "application/x-7z-compressed"
+        ) {
+          texts.push(`[Archivo comprimido] ${att.getName()}`);
         } else {
           texts.push(att.getName());
         }
