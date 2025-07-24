@@ -42,11 +42,9 @@ const GmailAutomation = {
     const props = PropertiesService.getScriptProperties();
     const start = props.getProperty("START_DATE");
     const end = props.getProperty("END_DATE");
-    let parts = [];
+    const parts = [];
     if (this.keywords.length) {
-      const kw = this.keywords
-        .map((k) => `subject:${k}`)
-        .join(" OR ");
+      const kw = this.keywords.map((k) => `"${k}"`).join(" OR ");
       parts.push(`(${kw})`);
     }
     if (this.trustedSenders.length) {
@@ -141,15 +139,20 @@ const GmailAutomation = {
     const attachments = msg.getAttachments();
     let texts = [];
     attachments.forEach((att) => {
-      const mime = att.getContentType();
-      if (mime === MimeType.PDF) {
-        texts.push(this.readPdf(att));
-      } else if (mime.indexOf("spreadsheet") !== -1 || mime.indexOf("excel") !== -1) {
-        texts.push(this.readSpreadsheet(att));
-      } else if (mime.startsWith("image/")) {
-        texts.push(this.readImage(att));
-      } else {
-        texts.push(att.getName());
+      try {
+        const mime = att.getContentType();
+        if (mime === MimeType.PDF) {
+          texts.push(this.readPdf(att));
+        } else if (mime.indexOf("spreadsheet") !== -1 || mime.indexOf("excel") !== -1) {
+          texts.push(this.readSpreadsheet(att));
+        } else if (mime.startsWith("image/")) {
+          texts.push(this.readImage(att));
+        } else {
+          texts.push(att.getName());
+        }
+      } catch (e) {
+        texts.push("[Adjunto no procesado]");
+        Logger.log(e);
       }
     });
     return texts.join("\n");
@@ -157,28 +160,38 @@ const GmailAutomation = {
 
   readPdf(blob) {
     const file = DriveApp.createFile(blob);
-    const doc = DocumentApp.openById(file.getId());
+    const converted = Drive.Files.copy({}, file.getId(), {
+      mimeType: MimeType.GOOGLE_DOCS,
+    });
+    file.setTrashed(true);
+    const doc = DocumentApp.openById(converted.id);
     const text = doc.getBody().getText();
-    DriveApp.getFileById(doc.getId()).setTrashed(true);
+    DriveApp.getFileById(converted.id).setTrashed(true);
     return text;
   },
 
   readImage(blob) {
-    const doc = DocumentApp.create("tmp");
-    doc.getBody().appendImage(blob);
-    doc.saveAndClose();
-    const file = DriveApp.getFileById(doc.getId());
-    const text = DocumentApp.openById(doc.getId()).getBody().getText();
-    file.setTrashed(true);
+    const res = Drive.Files.insert(
+      { mimeType: MimeType.GOOGLE_DOCS, title: blob.getName() },
+      blob,
+      { ocr: true }
+    );
+    const doc = DocumentApp.openById(res.id);
+    const text = doc.getBody().getText();
+    DriveApp.getFileById(res.id).setTrashed(true);
     return text;
   },
 
   readSpreadsheet(blob) {
     const file = DriveApp.createFile(blob);
-    const ss = SpreadsheetApp.open(file);
+    const converted = Drive.Files.copy({}, file.getId(), {
+      mimeType: MimeType.GOOGLE_SHEETS,
+    });
+    file.setTrashed(true);
+    const ss = SpreadsheetApp.openById(converted.id);
     const sheet = ss.getSheets()[0];
     const data = sheet.getDataRange().getDisplayValues();
-    DriveApp.getFileById(ss.getId()).setTrashed(true);
+    DriveApp.getFileById(converted.id).setTrashed(true);
     return data.map((r) => r.join("\t")).join("\n");
   },
 
